@@ -12,7 +12,9 @@ Users can experiment with different options for the choices above, and visualize
 
 The app allows users to load some predefined meshes (as well as their own OBJ files) and move vertices to see how the parameterization changes. 
 
-![The demo compares weight methods, visualizes distortion, selects a triangle, and changes the boundary.](docs/images/demo.gif)
+[![The demo compares weight methods, visualizes distortion, selects a triangle, and changes the boundary.](docs/images/demo.gif)](https://carlosandujar.github.io/Barycentric-coords-demo/)
+
+[See live demo](https://carlosandujar.github.io/Barycentric-coords-demo/)
 
 ## Using the app
 
