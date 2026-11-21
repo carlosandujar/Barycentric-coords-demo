@@ -1,0 +1,22 @@
+[hidden] { display: none !important; }
+.inspector-header { min-height: 40px; padding: 9px 16px; }
+.code-panel { display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr); gap: 20px; height: calc(100% - 40px); padding: 12px 18px; }
+.editor-section { display: flex; flex-direction: column; gap: 7px; min-height: 0; min-width: 0; }
+.editor-actions { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.code-container { flex: 1; min-height: 96px; border: 1px solid #dce4e5; border-radius: 5px; overflow: hidden; background: #f9fbfb; }
+#weight-code { display: block; width: 100%; height: 100%; min-height: 100px; padding: 10px; resize: none; border: 0; outline-offset: -2px; color: #24363c; background: #f9fbfb; font: .875rem/1.5 ui-monospace, monospace; tab-size: 2; }
+.code-container .CodeMirror { height: 100%; font: .875rem/1.5 ui-monospace, monospace; background: #f9fbfb; color: #24363c; }
+.code-container .CodeMirror-gutters { background: #eef3f3; border-color: #dce4e5; }
+.weight-inspection { overflow: auto; min-width: 0; min-height: 0; }
+#editor-feedback { color: #52676b; font-size: .8125rem; line-height: 1.45; margin-bottom: 5px; white-space: pre-wrap; overflow-wrap: anywhere; }
+#editor-feedback[data-error="true"] { color: #973a28; }
+.weight-inspection-actions { display: flex; gap: 4px; margin-bottom: 6px; }
+#weight-table-caption, #ring-data-panel > p { font-size: .75rem; margin-bottom: 6px; }
+.weight-table { border-collapse: collapse; width: 100%; font-size: .8125rem; font-variant-numeric: tabular-nums; }
+.weight-table th { font-weight: 500; color: #61757b; background: #f0f6f4; position: sticky; top: 0; }
+.weight-table th, .weight-table td { padding: 5px 8px; border-bottom: 1px solid #e5eded; text-align: right; }
+.weight-table th:first-child, .weight-table td:first-child { text-align: left; }
+.weight-table td { font-family: ui-monospace, monospace; }
+.weight-table tr[data-negative="true"] td { color: #97451e; }
+#ring-data { margin: 0; font: .8125rem/1.5 ui-monospace, monospace; white-space: pre-wrap; overflow-wrap: anywhere; background: #f4f8f7; padding: 10px; border-radius: 4px; }
+@media (max-width: 680px) { .code-panel { grid-template-columns: minmax(0, 1fr); height: auto; } .editor-section { height: 300px; } .weight-inspection { max-height: 350px; } }

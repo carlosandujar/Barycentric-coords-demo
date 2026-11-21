@@ -1,0 +1,32 @@
+# Installed dependencies and generated deployment output.
+node_modules/
+/_site/
+
+# Downloaded model sources, raw captures, and local validation tools.
+/.model-sources/
+/.demo-frames/
+
+# Local editable slide sources; exported PNG figures belong in the repository.
+/images/*.pptx
+/docs/images/*.pptx
+
+# Local environment settings; keep a shareable example if one is added.
+.env
+.env.*
+!.env.example
+
+# Editor settings, logs, and temporary files.
+.vscode/
+.idea/
+*.log
+*.tmp
+*.bak
+*.swp
+*.swo
+*~
+~$*
+
+# Operating-system metadata.
+.DS_Store
+Thumbs.db
+Desktop.ini

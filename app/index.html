@@ -1,0 +1,141 @@
+<!doctype html>
+<html lang="en-US">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="An interactive laboratory for exploring triangular meshes and their parameterizations.">
+  <title>Barycentric weights demo</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'%3E%3Cpath fill='%23157563' d='M20 3 38 35H2z'/%3E%3Cpath fill='none' stroke='white' stroke-width='2' d='m20 3 0 21L2 35m18-11 18 11'/%3E%3C/svg%3E">
+  <link rel="stylesheet" href="./styles.css">
+  <link rel="stylesheet" href="./editor.css">
+  <script type="importmap">
+    {"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/"}}
+  </script>
+</head>
+<body>
+  <div class="app">
+    <header class="app-header"><h1>Barycentric weights demo</h1><span class="credits">Carlos Andujar (UPC)</span></header>
+
+    <main id="workspace">
+      <div id="viewers" class="viewers">
+        <section class="view-panel" aria-labelledby="source-heading">
+          <header class="panel-header"><div class="panel-title-row"><h2 id="source-heading">Triangle mesh</h2><label class="example-picker">Model <select id="mesh-example"><optgroup label="Simple meshes"><option value="curved">Curved disk</option><option value="planar">Planar disk</option></optgroup><optgroup label="Anatomical OBJ meshes"><option value="head">Human head · Neck</option><option value="torso">Human torso · Waist</option><option value="bust">Human bust · Waist</option></optgroup></select></label><button id="import-obj">Import OBJ</button><input id="obj-file" type="file" accept=".obj" hidden><button id="mesh-details" class="topology-badge">Mesh details</button><button id="reset-source" class="reset-camera" aria-label="Reset 3D camera">Reset camera</button></div><div class="panel-tools" aria-label="Geometry and surface controls"><div class="segmented" role="group" aria-label="Geometry tool"><button id="select-tool" aria-pressed="true">Select</button><button id="move-tool" aria-pressed="false" title="G: 3D gizmo; X/Y/Z: axis; Shift+X/Y/Z: perpendicular plane; Escape: cancel or deselect">Move</button></div><label>Display mode <select id="surface-mode"><option value="solid">Solid</option><option value="checker">Checkerboard</option><option value="grid">Grid</option><option value="angle">Angle distortion</option><option value="area">Area distortion</option><option value="inversions">Inversions</option></select></label>
+      <label id="checker-size-label" hidden><span id="pattern-size-label-text">Checker cells</span> <input id="checker-size" type="number" min="2" max="256" step="2" value="12"></label><details class="display-details"><summary>Show</summary><div><label><input id="show-edges" aria-label="Edges" type="checkbox" checked> Edges</label><label><input id="show-vertices" aria-label="Vertices" type="checkbox" checked> Vertices</label></div></details></div></header>
+          <div id="source-view" class="viewport"><div class="viewport-info"><span id="mesh-summary" class="axis-label mesh-counts"></span><div id="source-selection" class="selection-overlay" hidden><strong id="source-selection-title"></strong><p id="source-coordinates"></p><p id="source-selection-description"></p></div></div><span id="geometry-feedback" class="view-notice" role="status" hidden></span><span class="view-caption">Drag to orbit · Scroll to zoom · Right-drag to pan</span></div>
+        </section>
+        <div id="vertical-splitter" class="splitter vertical" role="separator" tabindex="0" aria-label="Resize mesh views" aria-orientation="vertical" aria-valuemin="25" aria-valuemax="75" aria-valuenow="50"></div>
+        <section class="view-panel" aria-labelledby="uv-heading">
+          <header class="panel-header"><div class="panel-title-row uv-controls" aria-label="Parameterization controls"><h2 id="uv-heading">Parameterization</h2><label for="boundary-shape">Boundary <select id="boundary-shape" title="Square requires at least four boundary vertices. Spacing applies within each square side."><option value="circular">Circular</option><option value="square">Square</option></select></label><label for="boundary-spacing">Spacing <select id="boundary-spacing"><option value="arcLength">Arc length</option><option value="uniform">Uniform</option></select></label><label for="weight-method">Weights <select id="weight-method"><option value="uniform" selected>Uniform / Tutte</option><option value="meanValue">Mean Value</option><option value="cotangent">Cotangent / Harmonic</option><option value="inverseDistance">Inverse Distance</option><option value="custom">Custom</option></select></label><button id="solver-details" aria-haspopup="dialog">Solver details</button><button id="cancel-solve" hidden>Cancel</button><button id="reset-uv" class="reset-camera" aria-label="Reset UV camera">Reset camera</button></div></header>
+          <div id="uv-view" class="viewport"><div class="viewport-info"><span class="axis-label">Reference layout</span><div id="uv-selection" class="selection-overlay" hidden><p id="uv-coordinates"></p></div></div><div class="solver-feedback view-notice" id="solver-feedback" role="status" hidden></div><span class="view-caption">Drag to pan · Scroll to zoom</span></div>
+        </section>
+      </div>
+      <div id="horizontal-splitter" class="splitter horizontal" role="separator" tabindex="0" aria-label="Resize weight editor" aria-orientation="horizontal" aria-valuemin="150" aria-valuemax="420" aria-valuenow="224"></div>
+      <section class="inspector" aria-label="Weight function">
+        <header class="inspector-header"><h2>Weight function</h2></header>
+        <div id="code-panel" class="code-panel">
+          <section class="editor-section" aria-label="Weight function editor">
+            <div class="editor-actions"><button id="apply-weights" title="Apply (Ctrl+Enter)" aria-keyshortcuts="Control+Enter">Apply</button><button id="interface-details" aria-haspopup="dialog" aria-controls="interface-dialog">Weight function help</button></div>
+            <div class="code-container"><textarea id="weight-code" aria-label="Weight function code" spellcheck="false" autocapitalize="off" autocomplete="off"></textarea></div>
+          </section>
+          <section class="weight-inspection" aria-label="Weight inspection">
+            <p id="editor-feedback" role="status">Select an interior vertex to inspect its applied weights.</p>
+            <div class="weight-inspection-actions"><button id="show-weights" aria-pressed="true">Applied weights</button><button id="show-ring" aria-pressed="false">Input ring data</button></div>
+            <div id="weight-table-panel"><p id="weight-table-caption" class="secondary"></p><table class="weight-table"><thead><tr><th>Neighbor</th><th>Weight</th><th>Normalized</th></tr></thead><tbody id="weight-table-body"></tbody></table></div>
+            <div id="ring-data-panel" hidden><p class="secondary">Read-only input · previous/next face angles · radians</p><pre id="ring-data"></pre></div>
+          </section>
+        </div>
+      </section>
+    </main>
+
+</div>
+  <div id="load-error" class="error-banner" role="alert" hidden></div>
+  <dialog id="interface-dialog" aria-labelledby="interface-title">
+    <header class="dialog-header"><h2 id="interface-title">Interface details</h2><button id="close-interface-details">Close</button></header>
+    <div class="interface-content">
+      <figure class="interface-diagram">
+        <a href="./images/one-ring-geometry.png" target="_blank" rel="noopener" aria-label="Open the one-ring diagram at full size"><img src="./images/one-ring-geometry.png" width="2400" height="1600" alt="Vertex one-ring: center.position, neighbor.position, the shared edge length, center angles at the center vertex, and opposite angles at the previous and next neighbors."></a>
+        <figcaption><a href="./images/one-ring-geometry.png" target="_blank" rel="noopener">Open full-size diagram</a></figcaption>
+      </figure>
+      <article class="interface-contract" tabindex="0" aria-label="Weight function contract">
+        <h3>computeWeights(ring)</h3>
+        <p>The solver calls this synchronous JavaScript function once per interior vertex. Return one unnormalized weight per neighbor, in the same order as <code>ring.neighbors</code>.</p>
+        <pre><code>function computeWeights(ring) {
+  return ring.neighbors.map(neighbor =&gt;
+    1 / neighbor.edgeLength
+  );
+}</code></pre>
+        <p>This example reproduces Inverse Distance weights. Positions use original model units; angles are unsigned and measured in radians in each 3D triangle.</p>
+
+        <h3>The ring object</h3>
+        <dl class="contract-fields">
+          <dt><code>ring.center</code></dt><dd><code>{ id, position }</code>. The current center's zero-based vertex ID and <code>[x, y, z]</code> position.</dd>
+          <dt><code>ring.isBoundary</code></dt><dd>A boolean indicating an open boundary fan. Boundary vertices can be inspected in Input ring data, but the solver fixes their UVs and does not evaluate their weights.</dd>
+          <dt><code>ring.neighbors</code></dt><dd>Neighbors in oriented face-fan order, not sorted by ID or distance. An interior ring wraps around; a boundary fan is open.</dd>
+          <dt><code>ring.faces</code></dt><dd>The incident triangles, described below. Associate them with neighbors by face ID; their array order need not match neighbor order.</dd>
+        </dl>
+
+        <h3>Each neighbor</h3>
+        <p>For <code>neighbor = ring.neighbors[k]</code>, side <strong>[0]</strong> is the previous face and side <strong>[1]</strong> is the next face in fan order.</p>
+        <dl class="contract-fields">
+          <dt><code>neighbor.id</code></dt><dd>The neighbor's zero-based vertex ID.</dd>
+          <dt><code>neighbor.position</code></dt><dd>The neighbor's original <code>[x, y, z]</code> position.</dd>
+          <dt><code>neighbor.edgeLength</code></dt><dd>The Euclidean distance between <code>center.position</code> and <code>neighbor.position</code>.</dd>
+          <dt><code>neighbor.centerAngles</code></dt><dd><code>[previous, next]</code>: angles at the center, between the selected edge and the edge to the previous or next neighbor. Mean Value weights use these angles.</dd>
+          <dt><code>neighbor.oppositeAngles</code></dt><dd><code>[previous, next]</code>: angles opposite the selected edge, located at the previous and next neighbors, not at the selected neighbor. Cotangent weights use these angles.</dd>
+          <dt><code>neighbor.oppositeVertexIds</code></dt><dd>IDs of those previous and next vertices, in the same two-side order.</dd>
+          <dt><code>neighbor.incidentFaceIds</code></dt><dd>IDs of the previous and next triangles sharing the selected edge.</dd>
+        </dl>
+        <p>On an open boundary fan, a missing side is <code>null</code> in each angle/ID pair. The illustration is planar; the same definitions apply locally to curved meshes.</p>
+
+        <h3>Each incident face</h3>
+        <dl class="contract-fields">
+          <dt><code>face.id</code></dt><dd>The zero-based triangle ID, after any OBJ triangulation.</dd>
+          <dt><code>face.vertexIds</code></dt><dd>The triangle's three vertex IDs in face-winding order.</dd>
+          <dt><code>face.positions</code></dt><dd>Three <code>[x, y, z]</code> positions in that same order.</dd>
+          <dt><code>face.area</code></dt><dd>Triangle area in squared model units.</dd>
+          <dt><code>face.normal</code></dt><dd>A unit <code>[nx, ny, nz]</code> normal oriented by the face winding.</dd>
+        </dl>
+
+        <h3>Return rules</h3>
+        <ul>
+          <li>Return an ordinary array with exactly <code>ring.neighbors.length</code> entries. Entry <code>k</code> weights <code>ring.neighbors[k]</code>.</li>
+          <li>Each entry must be a finite number. Negative and zero weights are allowed; <code>NaN</code>, infinities, Promises, and typed arrays are rejected.</li>
+          <li>The row cannot be all zero or have a numerically canceling sum. You do not need to normalize the weights; the solver handles this.</li>
+          <li>Inputs are copied and read-only. Do not modify the ring, its objects, or its arrays.</li>
+        </ul>
+        <p>The interior equation is <code>UV_i = sum(w_ij * UV_j) / sum(w_ij)</code>. 
+          Weights do not have to be symmetric across an edge. 
+          </p>
+        <h3>Evaluation and updates</h3>
+        <p>The function runs in isolation without DOM or network access. </p>
+        <p>Click Apply to evaluate your custom function. Moving a vertex reevaluates the function; changing only Boundary or Spacing reuses its evaluated weights. 
+          If evaluation or solving fails, the last valid UV solution is kept.</p>
+        <p>Input ring data shows the values for the selected vertex. Applied weights shows raw and normalized weights used in the displayed solution.</p>
+      </article>
+    </div>
+  </dialog>
+  <dialog id="solver-dialog" aria-labelledby="solver-title">
+    <header class="dialog-header"><div><h2 id="solver-title">Solver details</h2></div><button id="close-solver-details">Close</button></header>
+    <p id="solver-detail-status"></p>
+    <p id="method-formula" class="solver-formula"></p>
+    <dl id="solver-detail-stats" class="topology-stats"></dl>
+  </dialog>
+  <dialog id="topology-dialog" aria-labelledby="topology-title">
+    <header class="dialog-header"><h2 id="topology-title">Mesh details</h2><button id="close-details">Close</button></header>
+    <p id="topology-status"></p>
+    <dl id="topology-stats" class="topology-stats"></dl>
+    <ul id="topology-issues"></ul>
+  </dialog>
+  <dialog id="import-error-dialog" aria-labelledby="import-error-title"><h2 id="import-error-title">Could not import OBJ</h2><p id="import-error-message"></p><p class="secondary">The previous mesh has been kept.</p><form method="dialog"><button>Close</button></form></dialog>
+  <script>
+    import('./js/app.js').catch(error => {
+      const banner = document.getElementById('load-error');
+      banner.hidden = false;
+      banner.textContent = location.protocol === 'file:'
+        ? 'This page must be served over HTTP. Run npm start in the project folder, then open http://127.0.0.1:4173. Opening index.html directly blocks JavaScript modules.'
+        : 'The viewers could not start. Check your internet connection for the Three.js CDN. ' + error.message;
+      console.error(error);
+    });
+  </script>
+</body>
+</html>
